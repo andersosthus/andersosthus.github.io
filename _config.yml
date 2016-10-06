@@ -104,6 +104,8 @@ text:
 # Build settings
 markdown: kramdown
 theme: minima
+paginate: 4
+permalink: pretty
 
 sass:
     sass_dir: _sass
