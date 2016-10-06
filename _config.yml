@@ -17,10 +17,10 @@ bing_verification:
 
 # Optional features
 animated:             false
-show_related_posts:   false
+show_related_posts:   true
 show_post_footers:    false
-show_social_icons:    false
-ajaxify_contact_form: false
+show_social_icons:    true
+ajaxify_contact_form: true
 enable_mathjax: false
 extended_fonts: false
 enable_anchorjs: false
@@ -32,7 +32,7 @@ fb_page_id:
 
 # Disqus post comments
 # (leave blank to disable Disqus)
-disqus_shortname:
+disqus_shortname: anders-osthus-blog
 
 # Facebook Comments plugin
 # (leave blank to disable Facebook Comments, otherwise set it to true)
@@ -41,14 +41,14 @@ facebook_appid:
 facebook_comments_number: 10
 
 # Social icons
-github_username:
+github_username: andersosthus
 bitbucket_username:
-stackoverflow_id:
-twitter_username:
+stackoverflow_id: 2026649
+twitter_username: andersosthus
 skype_username:
 steam_nickname:
 google_plus_id:
-linkedin_username:
+linkedin_username: aosthus
 angellist_username:
 medium_id:
 bitcoin_url:

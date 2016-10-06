@@ -1,0 +1,8 @@
+---
+layout: post
+title:  "New Blog"
+date:   2016-10-07 00:37:26 +0200
+categories: general
+---
+
+New blog, gonna post some stuff here shortly.
