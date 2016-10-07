@@ -24,7 +24,8 @@ Also, let me just clarify some terms I'll be using:
 * _ServicePackage_: All the files needed to upgrade a Service.
 * _SubPackage_: For lack of a better word, this refers to the _CodePackage_, _ConfigPackage_ and _DataPackges_ inside a _ServicePackage_
 
-#The beginning#
+# The beginning
+
 Ok, so now that we've got all that defined, back when we started with SF there weren't any tooling to manage versions inside the manifest. So we used Visual Studio (VS) to package each application we needed, and manually updated the versions inside the manifests. We didn't do any partial upgrades. This was a bit of a chore, as we also had to add stuff like CertificateInfo to the manifest and make sure the endpoints were defined correctly.
 
 Loads of manual things, but it was ok, since we were just starting out.
@@ -37,9 +38,10 @@ Anyways, we had these scripts, but they didn't really handle endpoints, certific
 
 So, we decided to fix it once and for all (for us at least).
 
-#Requirements#
+# Requirements
 
 We created a list of requirements that the tooling of our choice had to have:
+
 * It should know what have changed between versions
 * It should know how to package for partial upgrades
 * It should just fix all the version numbers in our manifests
@@ -49,21 +51,25 @@ We created a list of requirements that the tooling of our choice had to have:
 * The cluster it is packaging for is the master
 
 Also, bonus wishes:
+
 * Making tooling can be fun (and I don't like scripting comples things in powershell)
 * I'd like to make a .NET Core CLI app that is actually useful
 * Alternatives in tooling also helps drive the community forward
 
 So, we decided to make a command line packager in .NET Core.
 
-#The packager#
+# The packager
+
 The [Service Fabric Packager](https://github.com/proactima/ServiceFabricPackager) is a .NET Core CLI program creates an application package for each of your application, picking only things that have changed (and by changed, I also mean that if you change only a ServiceManifest for a service, only that will be packaged).
 
-##How it works##
+## How it works
+
 Let's talk a bit about how the packager works.
 
 First of all, it requiers an external storage to keep both version info files, and also to keep the config file for the packager in. Currently, both a local folder and Azure Storage Blob is supported. We use local folder when running it locally. The config and version files will be described later.
 
-###Assemblies and packages###
+### Assemblies and packages
+
 So when you run it, it'll scan the input folder for ServiceFabric applications, parse those to figure out which services belong to which application. The packager will not build for you, only package.
 
 After all the paths have been determined, the packager connects to the target cluster to get the current global version. The global version is just the highest version deployed to the cluster. If it's unable to parse the versions deployed, it'll fall back to creating a full package, as opposed to a partial package if it's able to determine the current version.
@@ -76,25 +82,32 @@ It'll also compute the hash of each of the application manifests. Then it'll com
 
 Then all the changed things are copied to the correct folders.
 
-###Manifests###
+### Manifests
+
 For the manifests (application/service), it'll create dummy manifests and apply changes from the config file to those and hash them. When it actually package, it'll take the local manifest, remove default services and application parameters (cause we don't use them), apply the same changes that it did to the dummy manifest and package that.
 
-###Config file###
+### Config file
+
 I've mentioned a config file several times. The config files contains information about how to connect to a cluster (endpoint, port, pfx file and pfx password). In addition, it contains endpoint configuration (including certificate thumbprints) for services that needs it.
 
-###Version Number###
+### Version Number
+
 For version number we've decided on a simple variant. The version number is just an incrementing int and then a string of your choosing. We use the git commit hash. That way, we can look at a cluster and immediatley know what commit we need to branch off from if we want to make a hotfix. Example version number: "13-64625c5a130d705995b7bf3b1d21bc297bfdaa0f".
 
-###Deploying the packages###
+### Deploying the packages
+
 We've just made it easy for ourself, and checked in the complied packager into our solution so that it's always available. We then just have a simple script that launches the packager with the correct settings, and then afterwards copies and register the packages to the local cluster and starts an upgrade.
 For our clusters running in Azure, we've created some custom deploy tasks based on the default SF deploy tasks. Mainly we've modified them to be able to deploy multiple packages. For staging, when we do a build, it'll auto start a release that uploads, registers and starts an upgrade.
 For prod, it's the same, but it doesn't auto start the upgrade.
 
-#Conclusion#
+# Conclusion
+
 For us this is the perfect packaging solution. We've been using it for about a month both for local onebox, and also for our staging/prod clusters. It has probably create up towards 200 packages already. I don't have to think about what should be deployed or not. It's handled for me. Also, whenever we refresh our SSL certs (about every 10 weeks), after deploying the certs to our VMSS, i only need to change the config file and start a build on the current commit. Then only the manifests will be packaged, and I can start the upgrade to make sure our services are using the new certs. 
 
-##Next steps##
+## Next steps
+
 So, the code is a bit messy now, and it has some missing features that I plan to fix shortly. Listed in no particular order:
+
 * Make sure all paths are cross-platform compatible
 * Create a VSTS task for the packager, with support for using the VSO connection manager for managing the cluster connection info
 * Move include/exclude to the config (they are hardcoded now)
