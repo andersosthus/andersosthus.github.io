@@ -22,9 +22,9 @@ We consider the above application types to be **one thing**. As in, we don't say
 
 Also, let me just clarify some terms I'll be using:
 
-* _ApplicationPackage_: All the files needed to upgrade an ApplicationType.
-* _ServicePackage_: All the files needed to upgrade a Service.
-* _SubPackage_: For lack of a better word, this refers to the _CodePackage_, _ConfigPackage_ and _DataPackges_ inside a _ServicePackage_
+* **ApplicationPackage**: All the files needed to upgrade an ApplicationType.
+* **ServicePackage**: All the files needed to upgrade a Service.
+* **SubPackage**: For lack of a better word, this refers to the _CodePackage_, _ConfigPackage_ and _DataPackges_ inside a _ServicePackage_
 
 # The beginning
 
@@ -79,7 +79,7 @@ After all the paths have been determined, the packager connects to the target cl
 So, how do we detemine what to package?
 Well, first of all, you need to have deterministic compilation turned on in all the projects. Currently, it doesn't seem like it's possible to pass that flag down through dotnet, so for now, any ASP.Net Core projects will be packaged if the local assemblies have been rebuilt since last package. Not much to do with that.
 
-For each service it finds, the packager will compute the hash for each of the components in that service. By that I mean it'll compute the hash for the code folder, the config folder, any data packages and the manifest.
+For each service it finds, the packager will compute the hash for each of the components in that service. By that I mean it'll compute the hash for each of the subpackages defined in the service manifest and the service manifest itself.
 It'll also compute the hash of each of the application manifests. Then it'll compare that with the version file it has loaded for the previous version and determine what has changed.
 
 Then all the changed things are copied to the correct folders.
@@ -104,7 +104,7 @@ For prod, it's the same, but it doesn't auto start the upgrade.
 
 # Conclusion
 
-For us this is the perfect packaging solution. We've been using it for about a month both for local onebox, and also for our staging/prod clusters. It has probably create up towards 200 packages already. I don't have to think about what should be deployed or not. It's handled for me. Also, whenever we refresh our SSL certs (about every 10 weeks), after deploying the certs to our VMSS, i only need to change the config file and start a build on the current commit. Then only the manifests will be packaged, and I can start the upgrade to make sure our services are using the new certs. 
+For us this is the perfect packaging solution. We've been using it for about a month both for local onebox, and also for our staging/prod clusters. It has probably created up towards 200 packages already. I don't have to think about what should be deployed or not. It's handled for me. Also, whenever we refresh our SSL certs (about every 10 weeks), after deploying the certs to our VMSS, i only need to change the config file and start a build on the current commit. Then only the manifests will be packaged, and I can start the upgrade to make sure our services are using the new certs. 
 
 ## Next steps
 
@@ -115,9 +115,12 @@ So, the code is a bit messy now, and it has some missing features that I plan to
 * Move include/exclude to the config (they are hardcoded now)
 * Refactor and clean up some of the internals
 * Remove the dummy manifests that are created and use the manifest we plan to deploy as the input for hashing
+* Add an example config file since that's missing right now...
 
-Quick note about the include/exclude.
+Quick note about the include/exclude:
+
 Includes are for taking an external file and copying it in during the packaging process. We use it to copy in a config file with some secrets that we need to bootstrap our config service.
+
 The excludes are used for excluding items from the hashing process. We use it to exclude resource files, since the compilation of those isn't deterministic, and thus without excluding them, every time we build the solution it would look like something has changed because of those files. The downside to this is that if we _only_ change the resource files, the packager won't pick it up and thus won't do any packaging.
 
 Next time, I plan on talking about creating custom VSTS tasks :)
